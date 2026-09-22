@@ -7,7 +7,7 @@
 # ARTIFACT REGISTRY
 # Stores the ev-generator container image. Using Artifact Registry instead of
 # Container Registry (gcr.io) because: location-specific (no global redirect),
-# supports vulnerability scanning, and Container Registry is deprecated.
+# supports vulnerability scanning, and Container Registry was shut down March 2025.
 # =============================================================================
 
 resource "google_artifact_registry_repository" "ev_fleet" {

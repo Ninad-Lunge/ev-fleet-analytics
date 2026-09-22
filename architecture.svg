@@ -409,7 +409,7 @@
   <!-- Footer -->
   <line x1="40" y1="1212" x2="1560" y2="1212" stroke="#cbd5e1" stroke-width="1"/>
   <text x="800" y="1230" text-anchor="middle" font-size="11" fill="#94a3b8">Generated 2026-09-21 · GCP Project: project-623b2045-f641-41e7-894 · Region: asia-south1</text>
-  <text x="800" y="1246" text-anchor="middle" font-size="11" fill="#94a3b8">Phases remaining: 7 — Terraform IaC · Looker Studio dashboard · Data quality rules · Cloud Monitoring alerts</text>
+  <text x="800" y="1246" text-anchor="middle" font-size="11" fill="#94a3b8">Phases remaining: 7 — Terraform IaC · Data Studio dashboard · Data quality rules · Cloud Monitoring alerts</text>
 
   <!-- battery_health_spark (from Spark, feeds ML features) -->
   <rect x="770" y="540" width="200" height="70" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>

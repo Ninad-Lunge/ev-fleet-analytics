@@ -132,16 +132,24 @@ ev-fleet-analytics/
 
 ## Phases implemented
 
-| Phase | What was built | GCP services |
+| Phase | What was built | GCP services (2026 names) |
 |-------|---------------|-------------|
 | 1 | Data lake: synthetic generator → Parquet → GCS | Cloud Storage |
 | 2 | Warehouse: star schema, analytics SQL, partition pruning | BigQuery |
 | 3 | Automated ingestion: containerized, scheduled, least-privilege SA | Artifact Registry, Cloud Run, Cloud Scheduler |
 | 4a | Always-on streaming ingestion | Pub/Sub → BigQuery subscription |
 | 4b | Stream enrichment with anomaly detection | Pub/Sub → Dataflow (Beam) |
-| 5 | Historical batch processing | Dataproc (PySpark) |
+| 5 | Historical batch processing | Managed Service for Apache Spark (formerly Dataproc) |
 | 6 | In-warehouse ML: feature engineering, training, prediction | BigQuery ML |
 | 7 | Full orchestration + data quality alerts + IaC | Cloud Workflows, Cloud Monitoring, Terraform |
+
+> **GCP service name changes (2024–2026):**
+> - Looker Studio → **Data Studio** (April 2026)
+> - Dataproc → **Managed Service for Apache Spark** (2025)
+> - Cloud Composer → **Managed Service for Apache Airflow** (2025)
+> - Cloud Functions → **Cloud Run functions** (August 2024)
+> - Container Registry → **Artifact Registry** (shut down March 2025; this project uses AR)
+> - Vertex AI → **Gemini Enterprise Agent Platform** (April 2026; not used in this project)
 
 ---
 
@@ -313,5 +321,5 @@ Dataproc workers.
 - **Regional API endpoints:** Cloud Scheduler → Cloud Run Jobs requires the regional endpoint (`asia-south1-run.googleapis.com`), not the global one (returns NOT_FOUND).
 - **BigQuery ML vs custom models:** BQML keeps training, evaluation, and inference in SQL. No model server, no `.pkl` files, no deployment pipeline. Tradeoff: simpler ops, less model flexibility.
 - **Dataflow vs BigQuery SQL for batch:** for daily enrichment at this scale, BigQuery SQL is the correct, cheaper choice. Dataflow is justified for streaming with windowing, exactly-once semantics, or complex non-SQL transforms.
-- **Cloud Workflows vs Composer:** Composer runs a GKE cluster (~$300/month). Workflows is serverless, free ≤5,000 steps/month, and sufficient for a sequential DAG. Choose Composer when you need Airflow's sensor ecosystem or complex dependency graphs.
+- **Cloud Workflows vs Managed Service for Apache Airflow:** Managed Service for Apache Airflow (formerly Cloud Composer) runs a GKE cluster (~$300/month). Workflows is serverless, free ≤5,000 steps/month, and sufficient for a sequential DAG. Choose Managed Airflow when you need Airflow's sensor ecosystem or complex dependency graphs.
 - **`_member` over `_binding` in Terraform:** additive vs authoritative IAM. `_binding` replaces the entire role member list and causes outages in shared projects.

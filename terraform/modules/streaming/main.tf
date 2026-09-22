@@ -111,11 +111,14 @@ locals {
 #   - Use dill.loads(dill.dumps(fn)) to test serialization before spending credits.
 #
 # ─────────────────────────────────────────────────────────────────────────────
-# DATAPROC — PySpark battery health batch job (Phase 5)
+# MANAGED SERVICE FOR APACHE SPARK (formerly Dataproc) — PySpark batch job (Phase 5)
+# The GCP console and documentation now refer to this as "Managed Service for
+# Apache Spark". The gcloud CLI still uses `gcloud dataproc` and the API name
+# `dataproc.googleapis.com` remains unchanged.
 # ─────────────────────────────────────────────────────────────────────────────
 #
 # IMPORTANT: Delete the cluster immediately after the job completes.
-# A running Dataproc cluster (e2-standard-2) bills ~$0.07/hour.
+# A running cluster (e2-standard-2) bills ~$0.07/hour.
 #
 # 1. Upload the PySpark script to GCS:
 #    gcloud storage cp spark/battery_health.py \
