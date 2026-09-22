@@ -1,0 +1,12 @@
+# Dataflow / Apache Beam pipeline dependencies (Phase 4b).
+# Kept separate from the core package because apache-beam is heavy.
+#
+# Requires Python 3.9-3.12 (NOT 3.13+). On macOS/arm64 with modern pip, the
+# isolated build env lacks pkg_resources, so install with setuptools pre-seeded
+# and build isolation disabled:
+#
+#     python3.12 -m venv .beam-venv
+#     ./.beam-venv/bin/pip install "setuptools<81" wheel
+#     ./.beam-venv/bin/pip install --no-build-isolation "apache-beam[gcp]==2.60.0"
+#
+apache-beam[gcp]==2.60.0

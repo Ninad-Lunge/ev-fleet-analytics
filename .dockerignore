@@ -1,0 +1,15 @@
+# Keep the build context small and avoid shipping local artifacts.
+.venv/
+venv/
+env/
+data/
+*.parquet
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.git/
+.gitignore
+tests/
+*.egg-info/

@@ -1,0 +1,435 @@
+# EV Fleet Analytics — Nightly Pipeline Workflow (Terraform template)
+#
+# This file is a Terraform templatefile. Variables in ${...} syntax are
+# substituted by Terraform when this file is read via templatefile().
+# It is NOT valid Cloud Workflows YAML on its own — never deploy it directly.
+#
+# Variables injected by Terraform:
+#   project_id  — GCP project ID
+#   region      — GCP region (e.g. asia-south1)
+#   bucket_name — GCS data lake bucket
+#   workflow_sa — Workflow service account email
+#   run_job     — Cloud Run Job name (ev-generator)
+#
+# Triggered by Cloud Scheduler at 02:00 local time daily (after 01:00 ingestion).
+# Cost: Cloud Workflows free tier = 5,000 internal steps/month.
+#       ~15 steps/run × 30 days = 450 steps/month. Stays free.
+
+main:
+  steps:
+
+    # -------------------------------------------------------------------------
+    # Assign reusable constants. All project-specific values are injected here
+    # from Terraform variables — no hardcoded strings in the rest of the file.
+    # -------------------------------------------------------------------------
+    - init:
+        assign:
+          - project: "${project_id}"
+          - region:  "${region}"
+          - bq_api:  "https://bigquery.googleapis.com/bigquery/v2/projects/${project_id}/jobs"
+          - run_api: "https://${region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${project_id}/jobs/${run_job}:run"
+
+    # -------------------------------------------------------------------------
+    # Step 1: Trigger the Cloud Run ingestion job (today's Parquet → GCS)
+    # -------------------------------------------------------------------------
+    - trigger_ingestion:
+        call: http.post
+        args:
+          url: $${run_api}
+          auth:
+            type: OAuth2
+        result: ingestion_response
+
+    - log_ingestion:
+        call: sys.log
+        args:
+          text: "Step 1 complete: ingestion job triggered"
+          severity: INFO
+
+    - wait_for_ingestion:
+        call: sys.sleep
+        args:
+          seconds: 120
+
+    # -------------------------------------------------------------------------
+    # Step 2a: Refresh ev_raw.telemetry (CTAS from external table)
+    # -------------------------------------------------------------------------
+    - submit_refresh_raw:
+        call: http.post
+        args:
+          url: $${bq_api}
+          auth:
+            type: OAuth2
+          body:
+            configuration:
+              query:
+                query: >-
+                  CREATE OR REPLACE TABLE
+                  `${project_id}.ev_raw.telemetry`
+                  PARTITION BY event_date CLUSTER BY vehicle_id AS
+                  SELECT vehicle_id, timestamp, latitude, longitude,
+                    battery_soc, battery_voltage, battery_temperature,
+                    motor_temperature, speed, odometer, charging_status,
+                    power_consumption, `date` AS event_date
+                  FROM `${project_id}.ev_raw.telemetry_ext`
+                useLegacySql: false
+                location: ${region}
+        result: raw_job
+
+    - wait_refresh_raw:
+        call: ev_bq_wait
+        args:
+          job_id: $${raw_job.body.jobReference.jobId}
+        result: raw_done
+
+    # -------------------------------------------------------------------------
+    # Step 2b+2c: Refresh fact_telemetry and dim_vehicle in parallel
+    # -------------------------------------------------------------------------
+    - refresh_analytics_parallel:
+        parallel:
+          branches:
+            - refresh_fact:
+                steps:
+                  - submit_fact:
+                      call: http.post
+                      args:
+                        url: $${bq_api}
+                        auth:
+                          type: OAuth2
+                        body:
+                          configuration:
+                            query:
+                              query: >-
+                                CREATE OR REPLACE TABLE
+                                `${project_id}.ev_analytics.fact_telemetry`
+                                PARTITION BY event_date CLUSTER BY vehicle_id AS
+                                SELECT vehicle_id, timestamp, event_date,
+                                  battery_soc, battery_voltage, battery_temperature,
+                                  motor_temperature, speed, odometer, power_consumption,
+                                  charging_status, latitude, longitude
+                                FROM `${project_id}.ev_raw.telemetry`
+                              useLegacySql: false
+                              location: ${region}
+                      result: fact_job
+                  - wait_fact:
+                      call: ev_bq_wait
+                      args:
+                        job_id: $${fact_job.body.jobReference.jobId}
+                      result: fact_done
+
+            - refresh_dim:
+                steps:
+                  - submit_dim:
+                      call: http.post
+                      args:
+                        url: $${bq_api}
+                        auth:
+                          type: OAuth2
+                        body:
+                          configuration:
+                            query:
+                              query: >-
+                                CREATE OR REPLACE TABLE
+                                `${project_id}.ev_analytics.dim_vehicle`
+                                AS WITH v AS (
+                                  SELECT DISTINCT vehicle_id
+                                  FROM `${project_id}.ev_raw.telemetry`
+                                ), e AS (
+                                  SELECT vehicle_id,
+                                    SAFE_CAST(REGEXP_EXTRACT(vehicle_id,r'(\d+)$') AS INT64) AS vnum
+                                  FROM v
+                                )
+                                SELECT vehicle_id,
+                                  ['Model A','Model B','Model C','Model D'][OFFSET(MOD(vnum,4))] AS model,
+                                  2019+MOD(vnum,6) AS manufacture_year,
+                                  [40.0,60.0,75.0,90.0][OFFSET(MOD(vnum,4))] AS battery_capacity_kwh,
+                                  ['north','south','east','west'][OFFSET(MOD(vnum,4))] AS fleet,
+                                  ['Maharashtra','Karnataka','Tamil Nadu','Gujarat'][OFFSET(MOD(vnum,4))] AS region
+                                FROM e
+                              useLegacySql: false
+                              location: ${region}
+                      result: dim_job
+                  - wait_dim:
+                      call: ev_bq_wait
+                      args:
+                        job_id: $${dim_job.body.jobReference.jobId}
+                      result: dim_done
+
+    - log_warehouse:
+        call: sys.log
+        args:
+          text: "Step 2 complete: warehouse refreshed"
+          severity: INFO
+
+    # -------------------------------------------------------------------------
+    # Step 3: Enrich today's telemetry (BigQuery SQL anomaly rules)
+    # -------------------------------------------------------------------------
+    - submit_enrich:
+        call: http.post
+        args:
+          url: $${bq_api}
+          auth:
+            type: OAuth2
+          body:
+            configuration:
+              query:
+                query: >-
+                  DELETE FROM `${project_id}.ev_raw.telemetry_enriched`
+                  WHERE DATE(timestamp) = CURRENT_DATE('Asia/Kolkata');
+                  INSERT INTO `${project_id}.ev_raw.telemetry_enriched`
+                    (vehicle_id, timestamp, battery_soc, battery_temperature,
+                     motor_temperature, speed, power_consumption, charging_status,
+                     is_anomaly, anomaly_reason, processed_at)
+                  SELECT vehicle_id, timestamp, battery_soc, battery_temperature,
+                    motor_temperature, speed, power_consumption, charging_status,
+                    (battery_temperature > 38.0
+                     OR motor_temperature > 70.0
+                     OR (battery_soc < 15.0 AND speed > 0 AND NOT charging_status)
+                    ) AS is_anomaly,
+                    ARRAY_TO_STRING(ARRAY_CONCAT(
+                      IF(battery_temperature > 38.0, ['battery_temp_high'], []),
+                      IF(motor_temperature > 70.0, ['motor_temp_high'], []),
+                      IF(battery_soc < 15.0 AND speed > 0 AND NOT charging_status,
+                         ['low_soc_while_driving'], [])
+                    ), ',') AS anomaly_reason,
+                    CURRENT_TIMESTAMP() AS processed_at
+                  FROM `${project_id}.ev_analytics.fact_telemetry`
+                  WHERE event_date = CURRENT_DATE('Asia/Kolkata')
+                useLegacySql: false
+                location: ${region}
+        result: enrich_job
+
+    - wait_enrich:
+        call: ev_bq_wait
+        args:
+          job_id: $${enrich_job.body.jobReference.jobId}
+        result: enrich_done
+
+    - log_enrich:
+        call: sys.log
+        args:
+          text: "Step 3 complete: telemetry enriched with anomaly flags"
+          severity: INFO
+
+    # -------------------------------------------------------------------------
+    # Step 4: Refresh ML feature table
+    # -------------------------------------------------------------------------
+    - submit_features:
+        call: http.post
+        args:
+          url: $${bq_api}
+          auth:
+            type: OAuth2
+          body:
+            configuration:
+              query:
+                query: >-
+                  CREATE OR REPLACE TABLE
+                  `${project_id}.ev_analytics.ml_features`
+                  AS WITH daily AS (
+                    SELECT vehicle_id, event_date,
+                      ROUND(AVG(battery_soc),2) AS avg_soc,
+                      ROUND(MIN(battery_soc),2) AS min_soc,
+                      ROUND(AVG(battery_temperature),2) AS avg_batt_temp,
+                      ROUND(MAX(battery_temperature),2) AS max_batt_temp,
+                      ROUND(AVG(battery_voltage),2) AS avg_voltage,
+                      ROUND(STDDEV(battery_voltage),4) AS voltage_stddev,
+                      ROUND(AVG(motor_temperature),2) AS avg_motor_temp,
+                      ROUND(AVG(speed),2) AS avg_speed,
+                      ROUND(AVG(power_consumption),3) AS avg_power,
+                      ROUND(SUM(GREATEST(power_consumption,0)*(300/3600)),2) AS daily_energy_kwh,
+                      COUNTIF(charging_status) AS charging_intervals,
+                      COUNT(*) AS reading_count
+                    FROM `${project_id}.ev_analytics.fact_telemetry`
+                    GROUP BY vehicle_id, event_date
+                  ), threshold AS (
+                    SELECT APPROX_QUANTILES(max_batt_temp,100)[OFFSET(95)] AS p95_max_temp
+                    FROM daily
+                  )
+                  SELECT d.vehicle_id, d.event_date, d.avg_soc, d.min_soc,
+                    d.avg_batt_temp, d.max_batt_temp, d.avg_voltage, d.voltage_stddev,
+                    d.avg_motor_temp, d.avg_speed, d.avg_power, d.daily_energy_kwh,
+                    d.charging_intervals, h.health_score,
+                    h.total_energy_kwh AS lifetime_energy_kwh,
+                    h.charging_hours AS lifetime_charging_hours,
+                    (d.max_batt_temp > t.p95_max_temp) AS is_anomaly
+                  FROM daily d CROSS JOIN threshold t
+                  LEFT JOIN `${project_id}.ev_analytics.battery_health_spark` h
+                    USING (vehicle_id)
+                useLegacySql: false
+                location: ${region}
+        result: features_job
+
+    - wait_features:
+        call: ev_bq_wait
+        args:
+          job_id: $${features_job.body.jobReference.jobId}
+        result: features_done
+
+    - log_features:
+        call: sys.log
+        args:
+          text: "Step 4 complete: ML features refreshed"
+          severity: INFO
+
+    # -------------------------------------------------------------------------
+    # Step 5: Retrain the BigQuery ML model
+    # -------------------------------------------------------------------------
+    - submit_retrain:
+        call: http.post
+        args:
+          url: $${bq_api}
+          auth:
+            type: OAuth2
+          body:
+            configuration:
+              query:
+                query: >-
+                  CREATE OR REPLACE MODEL
+                  `${project_id}.ev_analytics.battery_anomaly_model`
+                  OPTIONS (
+                    model_type='LOGISTIC_REG',
+                    input_label_cols=['is_anomaly'],
+                    auto_class_weights=TRUE,
+                    data_split_method='AUTO_SPLIT',
+                    max_iterations=50
+                  ) AS
+                  SELECT avg_soc, min_soc, avg_batt_temp, max_batt_temp, avg_voltage,
+                    voltage_stddev, avg_motor_temp, avg_speed, avg_power,
+                    daily_energy_kwh, charging_intervals, health_score,
+                    lifetime_energy_kwh, lifetime_charging_hours, is_anomaly
+                  FROM `${project_id}.ev_analytics.ml_features`
+                useLegacySql: false
+                location: ${region}
+        result: model_job
+
+    - wait_retrain:
+        call: ev_bq_wait
+        args:
+          job_id: $${model_job.body.jobReference.jobId}
+        result: model_done
+
+    - log_model:
+        call: sys.log
+        args:
+          text: "Step 5 complete: ML model retrained"
+          severity: INFO
+
+    # -------------------------------------------------------------------------
+    # Step 6: Refresh predictions table
+    # -------------------------------------------------------------------------
+    - submit_predictions:
+        call: http.post
+        args:
+          url: $${bq_api}
+          auth:
+            type: OAuth2
+          body:
+            configuration:
+              query:
+                query: >-
+                  CREATE OR REPLACE TABLE
+                  `${project_id}.ev_analytics.predictions`
+                  PARTITION BY event_date CLUSTER BY vehicle_id AS
+                  SELECT p.vehicle_id, p.event_date, p.predicted_is_anomaly,
+                    ROUND((SELECT prob.prob FROM UNNEST(p.predicted_is_anomaly_probs) AS prob
+                           WHERE prob.label = TRUE LIMIT 1), 4) AS anomaly_probability,
+                    f.max_batt_temp, f.avg_batt_temp, f.health_score,
+                    CURRENT_TIMESTAMP() AS refreshed_at
+                  FROM ML.PREDICT(
+                    MODEL `${project_id}.ev_analytics.battery_anomaly_model`,
+                    (SELECT vehicle_id, event_date, avg_soc, min_soc, avg_batt_temp,
+                       max_batt_temp, avg_voltage, voltage_stddev, avg_motor_temp,
+                       avg_speed, avg_power, daily_energy_kwh, charging_intervals,
+                       health_score, lifetime_energy_kwh, lifetime_charging_hours
+                     FROM `${project_id}.ev_analytics.ml_features`)
+                  ) p
+                  JOIN `${project_id}.ev_analytics.ml_features` f
+                    USING (vehicle_id, event_date)
+                useLegacySql: false
+                location: ${region}
+        result: pred_job
+
+    - wait_predictions:
+        call: ev_bq_wait
+        args:
+          job_id: $${pred_job.body.jobReference.jobId}
+        result: pred_done
+
+    - log_predictions:
+        call: sys.log
+        args:
+          text: "Step 6 complete: predictions table refreshed"
+          severity: INFO
+
+    # -------------------------------------------------------------------------
+    # Step 7: Query high-risk vehicles and log as a structured alert
+    # -------------------------------------------------------------------------
+    - submit_alert_query:
+        call: http.post
+        args:
+          url: $${bq_api}
+          auth:
+            type: OAuth2
+          body:
+            configuration:
+              query:
+                query: >-
+                  SELECT COUNT(*) AS high_risk_count
+                  FROM `${project_id}.ev_analytics.predictions`
+                  WHERE anomaly_probability > 0.6
+                    AND event_date = CURRENT_DATE('Asia/Kolkata')
+                useLegacySql: false
+                location: ${region}
+        result: alert_job
+
+    - wait_alert:
+        call: ev_bq_wait
+        args:
+          job_id: $${alert_job.body.jobReference.jobId}
+        result: alert_done
+
+    - log_complete:
+        call: sys.log
+        args:
+          text: "EV nightly pipeline complete. Query ev_analytics.predictions for today's anomaly scores."
+          severity: INFO
+
+    - return_success:
+        return:
+          status: "success"
+          message: "Nightly EV pipeline completed all 7 steps"
+
+
+# =============================================================================
+# Helper: poll BigQuery Jobs API until the job reaches DONE state.
+# =============================================================================
+ev_bq_wait:
+  params: [job_id]
+  steps:
+    - poll:
+        call: http.get
+        args:
+          url: $${"https://bigquery.googleapis.com/bigquery/v2/projects/${project_id}/jobs/" + job_id}
+          auth:
+            type: OAuth2
+          query:
+            location: ${region}
+        result: job_status
+    - check_state:
+        switch:
+          - condition: $${job_status.body.status.state == "DONE"}
+            next: check_errors
+          - condition: true
+            next: sleep_and_retry
+    - sleep_and_retry:
+        call: sys.sleep
+        args:
+          seconds: 10
+        next: poll
+    - check_errors:
+        switch:
+          - condition: $${"errorResult" in job_status.body.status}
+            raise: $${job_status.body.status.errorResult.message}
+          - condition: true
+            return: "DONE"

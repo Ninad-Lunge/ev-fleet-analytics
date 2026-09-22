@@ -1,0 +1,104 @@
+# terraform.tfvars.example
+#
+# Copy this file to terraform.tfvars, fill in real values, and add
+# terraform.tfvars to .gitignore. Never commit real project IDs, project
+# numbers, or email addresses to version control.
+#
+# Usage:
+#   cp terraform.tfvars.example terraform.tfvars
+#   # edit terraform.tfvars
+#   terraform init
+#   terraform plan
+
+# ---------------------------------------------------------------------------
+# CORE PROJECT SETTINGS
+# ---------------------------------------------------------------------------
+
+# Your GCP project ID. Find it in the GCP console or:
+#   gcloud config get-value project
+project_id = "your-project-id"
+
+# Numeric project number (NOT the project ID string).
+# Find it with:
+#   gcloud projects describe your-project-id --format='value(projectNumber)'
+# Required for Pub/Sub and Cloud Run service-agent IAM email construction.
+project_number = "123456789012"
+
+# GCP region for all regional resources. Use asia-south1 for Mumbai.
+region = "asia-south1"
+
+# Deployment environment. One of: dev, staging, prod.
+# Controls resource labels. In prod, consider enabling delete protection.
+environment = "dev"
+
+# ---------------------------------------------------------------------------
+# STORAGE
+# ---------------------------------------------------------------------------
+
+# Globally unique GCS bucket name for the data lake.
+# Tip: include project ID or a UUID suffix to guarantee uniqueness.
+bucket_name     = "ev-fleet-lake-your-project"
+bucket_location = "ASIA-SOUTH1"
+
+# ---------------------------------------------------------------------------
+# CONTAINER IMAGE
+# ---------------------------------------------------------------------------
+
+# Full image URI including tag. Build with:
+#   gcloud builds submit --tag <region>-docker.pkg.dev/<project>/ev-fleet/ev-generator:v1
+# IMPORTANT: always pin to a specific tag, never :latest.
+container_image = "asia-south1-docker.pkg.dev/your-project-id/ev-fleet/ev-generator:v1"
+
+# ---------------------------------------------------------------------------
+# SCHEDULING
+# ---------------------------------------------------------------------------
+
+# Cron schedule for the ingestion job (01:00 IST). Adjust per environment.
+ingestion_cron     = "0 1 * * *"
+pipeline_cron      = "0 2 * * *"
+scheduler_timezone = "Asia/Kolkata"
+
+# ---------------------------------------------------------------------------
+# INGESTION TUNING
+# ---------------------------------------------------------------------------
+
+# Start small in dev; scale up in staging/prod.
+vehicles_per_run = 100
+interval_seconds = 300 # 5-minute intervals; must evenly divide 86400
+
+# ---------------------------------------------------------------------------
+# MONITORING  (sensitive — do not commit real email to git)
+# ---------------------------------------------------------------------------
+
+alert_notification_email = "your-ops-email@example.com"
+
+# ---------------------------------------------------------------------------
+# PUB/SUB
+# ---------------------------------------------------------------------------
+
+pubsub_bq_ack_deadline_seconds = 600
+
+# ---------------------------------------------------------------------------
+# WORKFLOWS
+# ---------------------------------------------------------------------------
+
+# Path to the workflow YAML relative to the terraform/ directory.
+# Default works if your repo layout matches the platform structure.
+workflow_file_path = "../workflows/nightly_pipeline.yaml"
+
+# ---------------------------------------------------------------------------
+# STREAMING / BATCH (ephemeral; not created by Terraform)
+# ---------------------------------------------------------------------------
+
+dataflow_temp_prefix = "dataflow/temp"
+dataproc_zone        = "asia-south1-b"
+
+# ---------------------------------------------------------------------------
+# ADDITIONAL LABELS
+# ---------------------------------------------------------------------------
+
+tags = {
+  team    = "data-platform"
+  project = "ev-fleet-analytics"
+  # cost-centre = "data-eng-001"
+}

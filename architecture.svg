@@ -1,0 +1,425 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1400" font-family="'Segoe UI', Arial, sans-serif">
+
+  <!-- Background -->
+  <rect width="1600" height="1400" fill="#f8fafc"/>
+
+  <!-- ===== ARROW MARKERS ===== -->
+  <defs>
+    <marker id="ab" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/></marker>
+    <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#22c55e"/></marker>
+    <marker id="ao" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/></marker>
+    <marker id="ap" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#8b5cf6"/></marker>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ef4444"/></marker>
+    <marker id="as" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+  </defs>
+
+  <!-- ===== TITLE ===== -->
+  <text x="800" y="36" text-anchor="middle" font-size="20" font-weight="bold" fill="#1e293b">EV Fleet Analytics — Fully Automated Nightly Pipeline</text>
+  <text x="800" y="56" text-anchor="middle" font-size="12" fill="#64748b">project-623b2045-f641-41e7-894 · asia-south1 · Cloud Workflows orchestrated · zero manual steps</text>
+  <line x1="40" y1="66" x2="1560" y2="66" stroke="#cbd5e1" stroke-width="1.5"/>
+
+  <!-- ===== LEGEND ===== -->
+  <rect x="40" y="74" width="1520" height="36" rx="6" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <rect x="60" y="82" width="12" height="12" rx="2" fill="#fce7f3"/><text x="78" y="92" font-size="10" fill="#9d174d">Scheduling</text>
+  <rect x="170" y="82" width="12" height="12" rx="2" fill="#e0f2fe"/><text x="188" y="92" font-size="10" fill="#0369a1">Orchestration</text>
+  <rect x="290" y="82" width="12" height="12" rx="2" fill="#dcfce7"/><text x="308" y="92" font-size="10" fill="#166534">Compute</text>
+  <rect x="390" y="82" width="12" height="12" rx="2" fill="#dbeafe"/><text x="408" y="92" font-size="10" fill="#1e40af">Storage / Warehouse</text>
+  <rect x="560" y="82" width="12" height="12" rx="2" fill="#fef3c7"/><text x="578" y="92" font-size="10" fill="#92400e">Messaging</text>
+  <rect x="668" y="82" width="12" height="12" rx="2" fill="#ede9fe"/><text x="686" y="92" font-size="10" fill="#5b21b6">ML</text>
+  <rect x="730" y="82" width="12" height="12" rx="2" fill="#fee2e2"/><text x="748" y="92" font-size="10" fill="#991b1b">IAM / SA</text>
+  <line x1="840" y1="88" x2="880" y2="88" stroke="#3b82f6" stroke-width="2" marker-end="url(#ab)"/><text x="888" y="92" font-size="10" fill="#3b82f6">data flow</text>
+  <line x1="970" y1="88" x2="1010" y2="88" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#ao)"/><text x="1018" y="92" font-size="10" fill="#f59e0b">trigger</text>
+  <rect x="60" y="96" width="12" height="12" rx="2" fill="#fce7f3"/><text x="78" y="106" font-size="10" fill="#9d174d">01:00 IST</text>
+  <rect x="170" y="96" width="12" height="12" rx="2" fill="#fce7f3"/><text x="188" y="106" font-size="10" fill="#be185d">02:00 IST</text>
+
+  <!-- ===================================================================
+       TWO-SCHEDULER ROW
+       =================================================================== -->
+
+  <!-- Scheduler 1: 01:00 ingestion -->
+  <rect x="40" y="126" width="200" height="90" rx="8" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+  <text x="140" y="148" text-anchor="middle" font-size="11" font-weight="bold" fill="#9d174d">Cloud Scheduler</text>
+  <text x="140" y="164" text-anchor="middle" font-size="10" fill="#be185d">ev-ingest-daily</text>
+  <text x="140" y="180" text-anchor="middle" font-size="10" fill="#9d174d">0 1 * * *  Asia/Kolkata</text>
+  <text x="140" y="196" text-anchor="middle" font-size="10" fill="#64748b">Triggers Cloud Run Job</text>
+  <text x="140" y="210" text-anchor="middle" font-size="10" fill="#64748b">(safety fallback)</text>
+
+  <!-- Scheduler 2: 02:00 workflow -->
+  <rect x="280" y="126" width="200" height="90" rx="8" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+  <text x="380" y="148" text-anchor="middle" font-size="11" font-weight="bold" fill="#9d174d">Cloud Scheduler</text>
+  <text x="380" y="164" text-anchor="middle" font-size="10" fill="#be185d">ev-pipeline-daily</text>
+  <text x="380" y="180" text-anchor="middle" font-size="10" fill="#9d174d">0 2 * * *  Asia/Kolkata</text>
+  <text x="380" y="196" text-anchor="middle" font-size="10" fill="#64748b">Triggers Cloud Workflow</text>
+  <text x="380" y="210" text-anchor="middle" font-size="10" fill="#9d174d">Full pipeline orchestrator</text>
+
+  <!-- Arrow: Scheduler2 → Workflow -->
+  <line x1="482" y1="171" x2="548" y2="171" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#ao)"/>
+  <text x="515" y="163" text-anchor="middle" font-size="9" fill="#f59e0b">POST executions API</text>
+
+  <!-- ===================================================================
+       CLOUD WORKFLOWS — CENTRAL ORCHESTRATOR
+       =================================================================== -->
+  <rect x="550" y="118" width="780" height="106" rx="10" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
+  <text x="940" y="140" text-anchor="middle" font-size="13" font-weight="bold" fill="#0369a1">Cloud Workflows — ev-nightly-pipeline (ACTIVE)</text>
+  <text x="940" y="156" text-anchor="middle" font-size="10" fill="#0284c7">SA: ev-workflow-runner · serverless · free ≤5000 steps/month · ~15 steps/run</text>
+  <line x1="560" y1="163" x2="1320" y2="163" stroke="#7dd3fc" stroke-width="1"/>
+
+  <!-- Step labels inside workflow box -->
+  <text x="570" y="178" font-size="10" font-weight="bold" fill="#0369a1">Step 1</text>
+  <text x="570" y="191" font-size="9" fill="#0284c7">Trigger</text>
+  <text x="570" y="202" font-size="9" fill="#0284c7">ingestion</text>
+
+  <text x="655" y="178" font-size="10" font-weight="bold" fill="#0369a1">Step 2 (parallel)</text>
+  <text x="655" y="191" font-size="9" fill="#0284c7">Refresh warehouse</text>
+  <text x="655" y="202" font-size="9" fill="#0284c7">raw + fact + dim</text>
+
+  <text x="800" y="178" font-size="10" font-weight="bold" fill="#0369a1">Step 3</text>
+  <text x="800" y="191" font-size="9" fill="#0284c7">BQ SQL enrich</text>
+  <text x="800" y="202" font-size="9" fill="#0284c7">anomaly flags</text>
+
+  <text x="890" y="178" font-size="10" font-weight="bold" fill="#0369a1">Step 4</text>
+  <text x="890" y="191" font-size="9" fill="#0284c7">Refresh ML</text>
+  <text x="890" y="202" font-size="9" fill="#0284c7">features</text>
+
+  <text x="975" y="178" font-size="10" font-weight="bold" fill="#0369a1">Step 5</text>
+  <text x="975" y="191" font-size="9" fill="#0284c7">Retrain</text>
+  <text x="975" y="202" font-size="9" fill="#0284c7">BQML model</text>
+
+  <text x="1065" y="178" font-size="10" font-weight="bold" fill="#0369a1">Step 6</text>
+  <text x="1065" y="191" font-size="9" fill="#0284c7">Refresh</text>
+  <text x="1065" y="202" font-size="9" fill="#0284c7">predictions</text>
+
+  <text x="1155" y="178" font-size="10" font-weight="bold" fill="#0369a1">Step 7</text>
+  <text x="1155" y="191" font-size="9" fill="#0284c7">Anomaly</text>
+  <text x="1155" y="202" font-size="9" fill="#0284c7">alert query</text>
+
+  <!-- Step connector arrows -->
+  <line x1="640" y1="188" x2="652" y2="188" stroke="#0369a1" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="790" y1="188" x2="797" y2="188" stroke="#0369a1" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="882" y1="188" x2="887" y2="188" stroke="#0369a1" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="968" y1="188" x2="972" y2="188" stroke="#0369a1" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="1058" y1="188" x2="1062" y2="188" stroke="#0369a1" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="1148" y1="188" x2="1152" y2="188" stroke="#0369a1" stroke-width="1.5" marker-end="url(#ab)"/>
+
+  <!-- ===================================================================
+       DATA FLOW LANE — left to right below the Workflow box
+       =================================================================== -->
+
+  <!-- Vertical lines from Workflow steps down to resources -->
+  <!-- Step 1 → Cloud Run Job -->
+  <line x1="600" y1="224" x2="600" y2="278" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ao)"/>
+
+  <!-- Step 2 → GCS / BQ tables -->
+  <line x1="730" y1="224" x2="730" y2="278" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+
+  <!-- Step 3 → telemetry_enriched -->
+  <line x1="840" y1="224" x2="840" y2="278" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+
+  <!-- Step 4 → ml_features -->
+  <line x1="930" y1="224" x2="930" y2="278" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#ap)"/>
+
+  <!-- Step 5 → ML model -->
+  <line x1="1015" y1="224" x2="1015" y2="278" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#ap)"/>
+
+  <!-- Step 6 → predictions -->
+  <line x1="1105" y1="224" x2="1105" y2="278" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#ap)"/>
+
+  <!-- Step 7 → alert -->
+  <line x1="1195" y1="224" x2="1195" y2="278" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <!-- ===================================================================
+       RESOURCE ROW 1 — Ingestion + Storage
+       =================================================================== -->
+
+  <!-- Cloud Run Job -->
+  <rect x="540" y="280" width="150" height="80" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+  <text x="615" y="300" text-anchor="middle" font-size="11" font-weight="bold" fill="#166534">Cloud Run Job</text>
+  <text x="615" y="316" text-anchor="middle" font-size="10" fill="#15803d">ev-generator</text>
+  <text x="615" y="330" font-size="9" fill="#166534" text-anchor="middle">ev-generate --today</text>
+  <text x="615" y="344" font-size="9" fill="#166534" text-anchor="middle">--vehicles 100 --days 1</text>
+  <text x="615" y="356" font-size="9" fill="#64748b" text-anchor="middle">runs to completion</text>
+
+  <!-- Arrow: Cloud Run Job → GCS -->
+  <line x1="692" y1="320" x2="730" y2="320" stroke="#3b82f6" stroke-width="2" marker-end="url(#ab)"/>
+  <text x="711" y="312" text-anchor="middle" font-size="8" fill="#3b82f6">Parquet</text>
+
+  <!-- GCS -->
+  <rect x="732" y="280" width="200" height="100" rx="8" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="832" y="300" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af">Cloud Storage</text>
+  <text x="832" y="316" text-anchor="middle" font-size="10" fill="#1d4ed8">ev-fleet-lake-project-ninad</text>
+  <line x1="742" y1="322" x2="922" y2="322" stroke="#93c5fd" stroke-width="1"/>
+  <text x="742" y="336" font-size="9" fill="#1e40af">raw/telemetry/date=TODAY/</text>
+  <text x="742" y="350" font-size="9" fill="#1e40af">part-00000...part-00099.parquet</text>
+  <text x="742" y="364" font-size="9" fill="#64748b">(316,800 rows across 7 days)</text>
+  <text x="742" y="375" font-size="9" fill="#64748b">spark/ · dataflow/staging</text>
+
+  <!-- ===================================================================
+       RESOURCE ROW 2 — BigQuery Tables
+       =================================================================== -->
+
+  <!-- ev_raw.telemetry_ext (external) -->
+  <rect x="40" y="420" width="180" height="70" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="130" y="440" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e40af">ev_raw.telemetry_ext</text>
+  <text x="130" y="456" text-anchor="middle" font-size="9" fill="#3b82f6">EXTERNAL TABLE</text>
+  <text x="130" y="470" text-anchor="middle" font-size="9" fill="#64748b">Hive partitioned: date=</text>
+  <text x="130" y="482" text-anchor="middle" font-size="9" fill="#64748b">auto-reads new GCS files</text>
+
+  <!-- Arrow: GCS → external table (already connected via Hive) -->
+  <line x1="732" y1="340" x2="222" y2="440" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ab)"/>
+  <text x="460" y="380" text-anchor="middle" font-size="9" fill="#3b82f6">auto-reads on query</text>
+
+  <!-- ev_raw.telemetry (native) -->
+  <rect x="40" y="510" width="180" height="80" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="130" y="530" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e40af">ev_raw.telemetry</text>
+  <text x="130" y="546" text-anchor="middle" font-size="9" fill="#64748b">NATIVE · CTAS from ext</text>
+  <text x="130" y="560" text-anchor="middle" font-size="9" fill="#64748b">PARTITION BY event_date</text>
+  <text x="130" y="572" text-anchor="middle" font-size="9" fill="#64748b">CLUSTER BY vehicle_id</text>
+  <text x="130" y="584" text-anchor="middle" font-size="9" fill="#64748b">316,800 rows · 7 days</text>
+
+  <!-- Arrow: external → native (Step 2a) -->
+  <line x1="130" y1="490" x2="130" y2="508" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+  <text x="148" y="502" font-size="9" fill="#3b82f6">CTAS</text>
+
+  <!-- Arrow: native → fact_telemetry (Step 2b) -->
+  <line x1="222" y1="550" x2="280" y2="550" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+
+  <!-- fact_telemetry -->
+  <rect x="282" y="510" width="190" height="80" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="377" y="530" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e40af">ev_analytics.fact_telemetry</text>
+  <text x="377" y="546" text-anchor="middle" font-size="9" fill="#64748b">PARTITION BY event_date</text>
+  <text x="377" y="560" text-anchor="middle" font-size="9" fill="#64748b">CLUSTER BY vehicle_id</text>
+  <text x="377" y="574" text-anchor="middle" font-size="9" fill="#64748b">316,800 rows · 7 days</text>
+  <text x="377" y="586" text-anchor="middle" font-size="9" fill="#1e40af">12 measure columns</text>
+
+  <!-- dim_vehicle (Step 2c, parallel to fact) -->
+  <rect x="282" y="420" width="190" height="70" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="377" y="440" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e40af">ev_analytics.dim_vehicle</text>
+  <text x="377" y="456" text-anchor="middle" font-size="9" fill="#64748b">100 vehicles, synthesized</text>
+  <text x="377" y="468" text-anchor="middle" font-size="9" fill="#64748b">model/year/capacity/fleet</text>
+  <text x="377" y="482" text-anchor="middle" font-size="9" fill="#64748b">refreshed each run</text>
+
+  <!-- Arrow: native → dim (Step 2c) -->
+  <line x1="222" y1="490" x2="280" y2="460" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+
+  <!-- ===================================================================
+       ENRICHMENT + PUB/SUB STREAMING (4a)
+       =================================================================== -->
+
+  <!-- telemetry_enriched (Step 3 SQL) -->
+  <rect x="510" y="420" width="210" height="90" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="615" y="440" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e40af">ev_raw.telemetry_enriched</text>
+  <text x="615" y="456" text-anchor="middle" font-size="9" fill="#3b82f6">Step 3: BigQuery SQL enrichment</text>
+  <text x="615" y="470" text-anchor="middle" font-size="9" fill="#64748b">replaces manual Dataflow</text>
+  <text x="615" y="484" text-anchor="middle" font-size="9" fill="#64748b">57,600 today · 5,613 anomalies</text>
+  <text x="615" y="498" text-anchor="middle" font-size="9" fill="#1e40af">is_anomaly · anomaly_reason</text>
+  <text x="615" y="508" text-anchor="middle" font-size="9" fill="#64748b">DELETE+INSERT today each run</text>
+
+  <!-- Arrow: fact_telemetry → enriched -->
+  <line x1="474" y1="550" x2="540" y2="480" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+  <text x="520" y="520" text-anchor="middle" font-size="9" fill="#3b82f6">SQL anomaly rules</text>
+
+  <!-- Pub/Sub lane (4a - always on, separate from workflow) -->
+  <rect x="510" y="530" width="210" height="80" rx="8" fill="#fef3c7" stroke="#fcd34d" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="615" y="550" text-anchor="middle" font-size="10" font-weight="bold" fill="#92400e">Pub/Sub 4a (always-on)</text>
+  <text x="615" y="566" text-anchor="middle" font-size="9" fill="#b45309">ev-telemetry → ev-telemetry-bq</text>
+  <text x="615" y="580" text-anchor="middle" font-size="9" fill="#64748b">BigQuery subscription</text>
+  <text x="615" y="594" text-anchor="middle" font-size="9" fill="#64748b">→ ev_raw.telemetry_stream</text>
+  <text x="615" y="604" text-anchor="middle" font-size="9" fill="#92400e">(real-time, not in workflow)</text>
+
+  <!-- ===================================================================
+       ML CHAIN
+       =================================================================== -->
+
+  <!-- ml_features (Step 4) -->
+  <rect x="770" y="420" width="200" height="90" rx="8" fill="#ede9fe" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="870" y="440" text-anchor="middle" font-size="10" font-weight="bold" fill="#5b21b6">ev_analytics.ml_features</text>
+  <text x="870" y="456" text-anchor="middle" font-size="9" fill="#64748b">700 rows · 14 features</text>
+  <text x="870" y="470" text-anchor="middle" font-size="9" fill="#64748b">avg/max batt_temp · voltage_stddev</text>
+  <text x="870" y="484" text-anchor="middle" font-size="9" fill="#64748b">health_score · charging_intervals</text>
+  <text x="870" y="498" text-anchor="middle" font-size="9" fill="#5b21b6">Label: max_batt_temp > p95</text>
+  <text x="870" y="508" text-anchor="middle" font-size="9" fill="#64748b">5% positive · refreshed daily</text>
+
+  <!-- Arrow: fact → ml_features -->
+  <line x1="474" y1="540" x2="768" y2="480" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#ap)"/>
+
+  <!-- battery_anomaly_model (Step 5) -->
+  <rect x="1010" y="420" width="200" height="100" rx="8" fill="#ede9fe" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="1110" y="440" text-anchor="middle" font-size="10" font-weight="bold" fill="#5b21b6">battery_anomaly_model</text>
+  <text x="1110" y="456" text-anchor="middle" font-size="9" fill="#7c3aed">LOGISTIC_REG</text>
+  <text x="1110" y="470" text-anchor="middle" font-size="9" fill="#64748b">auto_class_weights=TRUE</text>
+  <text x="1110" y="484" text-anchor="middle" font-size="9" fill="#64748b">retrained daily on new features</text>
+  <text x="1110" y="498" text-anchor="middle" font-size="9" fill="#5b21b6">ROC-AUC: 0.842 · Recall: 0.97</text>
+  <text x="1110" y="512" text-anchor="middle" font-size="9" fill="#64748b">stored in BigQuery dataset</text>
+  <text x="1110" y="518" text-anchor="middle" font-size="9" fill="#64748b">no model server needed</text>
+
+  <!-- Arrow: ml_features → model -->
+  <line x1="972" y1="465" x2="1008" y2="465" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#ap)"/>
+  <text x="990" y="457" text-anchor="middle" font-size="8" fill="#8b5cf6">retrain</text>
+
+  <!-- predictions (Step 6) -->
+  <rect x="1250" y="420" width="200" height="110" rx="8" fill="#ede9fe" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="1350" y="440" text-anchor="middle" font-size="10" font-weight="bold" fill="#5b21b6">ev_analytics.predictions</text>
+  <text x="1350" y="456" text-anchor="middle" font-size="9" fill="#64748b">100 vehicles · scored daily</text>
+  <text x="1350" y="470" text-anchor="middle" font-size="9" fill="#64748b">predicted_is_anomaly</text>
+  <text x="1350" y="484" text-anchor="middle" font-size="9" fill="#64748b">anomaly_probability (0-1)</text>
+  <text x="1350" y="498" text-anchor="middle" font-size="9" fill="#5b21b6">70 predicted anomalous today</text>
+  <text x="1350" y="512" text-anchor="middle" font-size="9" fill="#5b21b6">max_prob: 0.699 (EV-0093)</text>
+  <text x="1350" y="524" text-anchor="middle" font-size="9" fill="#64748b">PARTITION BY event_date</text>
+
+  <!-- Arrow: model → predictions -->
+  <line x1="1212" y1="470" x2="1248" y2="470" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#ap)"/>
+  <text x="1230" y="462" text-anchor="middle" font-size="8" fill="#8b5cf6">ML.PREDICT</text>
+
+  <!-- ===================================================================
+       IAM SUMMARY
+       =================================================================== -->
+  <rect x="40" y="650" width="1520" height="30" rx="5" fill="#1e293b"/>
+  <text x="800" y="670" text-anchor="middle" font-size="12" font-weight="bold" fill="white">IAM — Least-Privilege Service Accounts</text>
+
+  <!-- ev-workflow-runner SA -->
+  <rect x="40" y="694" width="460" height="120" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+  <text x="270" y="714" text-anchor="middle" font-size="11" font-weight="bold" fill="#991b1b">ev-workflow-runner@project-*.iam...</text>
+  <line x1="50" y1="720" x2="490" y2="720" stroke="#fca5a5" stroke-width="1"/>
+  <text x="50" y="736" font-size="10" fill="#991b1b">Used by: Cloud Scheduler (triggers workflow)</text>
+  <text x="50" y="752" font-size="10" fill="#991b1b">         Cloud Workflow itself (calls BQ + Run API)</text>
+  <text x="50" y="768" font-size="10" fill="#991b1b">Grants (project): bigquery.jobUser · bigquery.dataEditor</text>
+  <text x="50" y="784" font-size="10" fill="#991b1b">                  logging.logWriter · run.invoker</text>
+  <text x="50" y="800" font-size="10" fill="#991b1b">                  workflows.invoker</text>
+  <text x="50" y="808" font-size="10" fill="#991b1b">Grant (bucket):   storage.objectViewer (BQ external table glob)</text>
+
+  <!-- ev-ingest-runner SA -->
+  <rect x="520" y="694" width="400" height="120" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+  <text x="720" y="714" text-anchor="middle" font-size="11" font-weight="bold" fill="#991b1b">ev-ingest-runner@project-*.iam...</text>
+  <line x1="530" y1="720" x2="910" y2="720" stroke="#fca5a5" stroke-width="1"/>
+  <text x="530" y="736" font-size="10" fill="#991b1b">Used by: Cloud Run Job (ev-generator)</text>
+  <text x="530" y="752" font-size="10" fill="#991b1b">Grant (bucket only): storage.objectCreator</text>
+  <text x="530" y="768" font-size="10" fill="#991b1b">Grant (job only):    run.invoker on ev-generator</text>
+  <text x="530" y="784" font-size="10" fill="#64748b">Can CREATE objects in bucket only.</text>
+  <text x="530" y="800" font-size="10" fill="#64748b">Cannot read, delete, or access any</text>
+  <text x="530" y="810" font-size="10" fill="#64748b">other resource. True least-privilege.</text>
+
+  <!-- Compute default SA -->
+  <rect x="940" y="694" width="620" height="120" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+  <text x="1250" y="714" text-anchor="middle" font-size="11" font-weight="bold" fill="#991b1b">355587796204-compute@developer.gserviceaccount.com (Compute Engine default)</text>
+  <line x1="950" y1="720" x2="1550" y2="720" stroke="#fca5a5" stroke-width="1"/>
+  <text x="950" y="736" font-size="10" fill="#991b1b">Used by: Cloud Build (image build), Dataflow workers, Dataproc workers</text>
+  <text x="950" y="752" font-size="10" fill="#991b1b">Grants: artifactregistry.writer · storage.objectViewer · logging.logWriter</text>
+  <text x="950" y="768" font-size="10" fill="#991b1b">        dataflow.worker · pubsub.subscriber · bigquery.dataEditor · dataproc.worker</text>
+  <text x="950" y="784" font-size="10" fill="#64748b">Note: these are project-level grants. In production each service should have</text>
+  <text x="950" y="800" font-size="10" fill="#64748b">its own dedicated SA. This is acceptable for a learning project.</text>
+
+  <!-- Pub/Sub service agent -->
+  <rect x="40" y="826" width="460" height="60" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1"/>
+  <text x="270" y="846" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">service-355587796204@gcp-sa-pubsub (Pub/Sub service agent)</text>
+  <text x="50" y="862" font-size="10" fill="#991b1b">Grants: bigquery.dataEditor · bigquery.metadataViewer</text>
+  <text x="50" y="878" font-size="10" fill="#64748b">Used by the Pub/Sub managed service to write to ev_raw.telemetry_stream</text>
+
+  <!-- ===================================================================
+       BATCH PHASES (Spark + Streaming sidebar)
+       =================================================================== -->
+  <rect x="40" y="908" width="1520" height="30" rx="5" fill="#334155"/>
+  <text x="800" y="928" text-anchor="middle" font-size="12" font-weight="bold" fill="white">ON-DEMAND / PERIODIC PHASES (not in daily workflow — run manually or triggered separately)</text>
+
+  <!-- Pub/Sub 4b Dataflow -->
+  <rect x="40" y="950" width="340" height="100" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="210" y="970" text-anchor="middle" font-size="11" font-weight="bold" fill="#166534">Dataflow/Beam (Phase 4b) — on demand</text>
+  <text x="50" y="988" font-size="9" fill="#64748b">Pub/Sub ev-telemetry-beam → Beam pipeline</text>
+  <text x="50" y="1002" font-size="9" fill="#64748b">parse → drop invalid → enrich → BQ write</text>
+  <text x="50" y="1016" font-size="9" fill="#166534">Key lesson: all Beam fns must be self-contained</text>
+  <text x="50" y="1030" font-size="9" fill="#ef4444">(drain immediately after use — bills per VM/sec)</text>
+  <text x="50" y="1044" font-size="9" fill="#64748b">→ ev_raw.telemetry_enriched (streaming path)</text>
+
+  <!-- Dataproc Spark -->
+  <rect x="410" y="950" width="340" height="100" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="580" y="970" text-anchor="middle" font-size="11" font-weight="bold" fill="#166534">Dataproc/PySpark (Phase 5) — on demand</text>
+  <text x="420" y="988" font-size="9" fill="#64748b">Single-node e2-standard-2 cluster (asia-south1-b)</text>
+  <text x="420" y="1002" font-size="9" fill="#64748b">spark.read.parquet(gs://.../raw/telemetry/**)</text>
+  <text x="420" y="1016" font-size="9" fill="#64748b">groupBy(vehicle_id).agg(temps/energy/health)</text>
+  <text x="420" y="1030" font-size="9" fill="#166534">→ ev_analytics.battery_health_spark</text>
+  <text x="420" y="1044" font-size="9" fill="#ef4444">(delete cluster immediately — bills per VM/sec)</text>
+
+  <!-- Architecture decision note -->
+  <rect x="790" y="950" width="770" height="100" rx="8" fill="#fef9c3" stroke="#fde047" stroke-width="1.5"/>
+  <text x="1175" y="970" text-anchor="middle" font-size="11" font-weight="bold" fill="#78350f">Architecture Design Decisions</text>
+  <text x="800" y="988" font-size="9" fill="#78350f">Dataflow (4b) replaced by BQ SQL in the nightly workflow: for daily batch enrichment, SQL is correct.</text>
+  <text x="800" y="1002" font-size="9" fill="#78350f">Dataflow justified when: complex windowing, late data, exactly-once semantics, streaming aggregations.</text>
+  <text x="800" y="1016" font-size="9" fill="#78350f">Dataproc justified when: billions of rows, non-SQL logic, existing Spark codebases, ML libraries.</text>
+  <text x="800" y="1030" font-size="9" fill="#78350f">Cloud Workflows chosen over Composer: Composer runs a GKE cluster (~$300/mo). Workflows is serverless,</text>
+  <text x="800" y="1044" font-size="9" fill="#78350f">free ≤5000 steps/month, and sufficient for a sequential DAG with polling. Composer adds value at scale.</text>
+
+  <!-- ===================================================================
+       COMPLETE AUTOMATION SUMMARY
+       =================================================================== -->
+  <rect x="40" y="1072" width="1520" height="30" rx="5" fill="#166534"/>
+  <text x="800" y="1092" text-anchor="middle" font-size="12" font-weight="bold" fill="white">COMPLETE AUTOMATION SUMMARY — zero manual steps in production flow</text>
+
+  <!-- Timeline boxes -->
+  <rect x="40" y="1114" width="220" height="80" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="150" y="1132" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">01:00 IST</text>
+  <text x="150" y="1148" text-anchor="middle" font-size="10" fill="#166534">ev-ingest-daily fires</text>
+  <text x="150" y="1162" text-anchor="middle" font-size="9" fill="#64748b">Cloud Run ev-generator runs</text>
+  <text x="150" y="1176" text-anchor="middle" font-size="9" fill="#64748b">Writes date=today Parquet to GCS</text>
+  <text x="150" y="1188" text-anchor="middle" font-size="9" fill="#64748b">~60 seconds</text>
+
+  <line x1="262" y1="1154" x2="278" y2="1154" stroke="#22c55e" stroke-width="2" marker-end="url(#ag)"/>
+
+  <rect x="280" y="1114" width="220" height="80" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="390" y="1132" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">02:00 IST</text>
+  <text x="390" y="1148" text-anchor="middle" font-size="10" fill="#166534">ev-pipeline-daily fires</text>
+  <text x="390" y="1162" text-anchor="middle" font-size="9" fill="#64748b">Cloud Workflows starts</text>
+  <text x="390" y="1176" text-anchor="middle" font-size="9" fill="#64748b">Step 1: re-triggers ingestion</text>
+  <text x="390" y="1188" text-anchor="middle" font-size="9" fill="#64748b">waits 120s for completion</text>
+
+  <line x1="502" y1="1154" x2="518" y2="1154" stroke="#22c55e" stroke-width="2" marker-end="url(#ag)"/>
+
+  <rect x="520" y="1114" width="220" height="80" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="630" y="1132" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">02:02 IST</text>
+  <text x="630" y="1148" text-anchor="middle" font-size="10" fill="#166534">Warehouse refresh</text>
+  <text x="630" y="1162" text-anchor="middle" font-size="9" fill="#64748b">ev_raw.telemetry CTAS</text>
+  <text x="630" y="1176" text-anchor="middle" font-size="9" fill="#64748b">fact_telemetry + dim_vehicle</text>
+  <text x="630" y="1188" text-anchor="middle" font-size="9" fill="#64748b">parallel BQ jobs</text>
+
+  <line x1="742" y1="1154" x2="758" y2="1154" stroke="#22c55e" stroke-width="2" marker-end="url(#ag)"/>
+
+  <rect x="760" y="1114" width="220" height="80" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="870" y="1132" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">02:03 IST</text>
+  <text x="870" y="1148" text-anchor="middle" font-size="10" fill="#166534">BQ SQL enrichment</text>
+  <text x="870" y="1162" text-anchor="middle" font-size="9" fill="#64748b">DELETE + INSERT today rows</text>
+  <text x="870" y="1176" text-anchor="middle" font-size="9" fill="#64748b">with anomaly flags</text>
+  <text x="870" y="1188" text-anchor="middle" font-size="9" fill="#64748b">57,600 rows in ~30s</text>
+
+  <line x1="982" y1="1154" x2="998" y2="1154" stroke="#22c55e" stroke-width="2" marker-end="url(#ag)"/>
+
+  <rect x="1000" y="1114" width="220" height="80" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="1110" y="1132" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">02:03–02:05 IST</text>
+  <text x="1110" y="1148" text-anchor="middle" font-size="10" fill="#166534">ML pipeline</text>
+  <text x="1110" y="1162" text-anchor="middle" font-size="9" fill="#64748b">ml_features refresh</text>
+  <text x="1110" y="1176" text-anchor="middle" font-size="9" fill="#64748b">model retrain (~50s)</text>
+  <text x="1110" y="1188" text-anchor="middle" font-size="9" fill="#64748b">predictions refresh</text>
+
+  <line x1="1222" y1="1154" x2="1238" y2="1154" stroke="#22c55e" stroke-width="2" marker-end="url(#ag)"/>
+
+  <rect x="1240" y="1114" width="320" height="80" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="1400" y="1132" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">02:05 IST — DONE ✓</text>
+  <text x="1400" y="1148" text-anchor="middle" font-size="10" fill="#166534">ev_analytics.predictions refreshed</text>
+  <text x="1400" y="1162" text-anchor="middle" font-size="9" fill="#64748b">100 vehicles scored · 70 high-risk today</text>
+  <text x="1400" y="1176" text-anchor="middle" font-size="9" fill="#64748b">max anomaly_probability: 0.699</text>
+  <text x="1400" y="1188" text-anchor="middle" font-size="9" fill="#64748b">Total elapsed: ~5 min end to end</text>
+
+  <!-- Footer -->
+  <line x1="40" y1="1212" x2="1560" y2="1212" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="800" y="1230" text-anchor="middle" font-size="11" fill="#94a3b8">Generated 2026-09-21 · GCP Project: project-623b2045-f641-41e7-894 · Region: asia-south1</text>
+  <text x="800" y="1246" text-anchor="middle" font-size="11" fill="#94a3b8">Phases remaining: 7 — Terraform IaC · Looker Studio dashboard · Data quality rules · Cloud Monitoring alerts</text>
+
+  <!-- battery_health_spark (from Spark, feeds ML features) -->
+  <rect x="770" y="540" width="200" height="70" rx="8" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="870" y="558" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e40af">ev_analytics.battery_health_spark</text>
+  <text x="870" y="574" text-anchor="middle" font-size="9" fill="#64748b">Spark output · 100 rows</text>
+  <text x="870" y="588" text-anchor="middle" font-size="9" fill="#64748b">health_score · lifetime metrics</text>
+  <text x="870" y="600" text-anchor="middle" font-size="9" fill="#64748b">refreshed manually via Spark</text>
+
+  <!-- Arrow: battery_health_spark → ml_features -->
+  <line x1="870" y1="510" x2="870" y2="418" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ap)"/>
+  <text x="892" y="480" font-size="8" fill="#8b5cf6">feeds features</text>
+
+</svg>

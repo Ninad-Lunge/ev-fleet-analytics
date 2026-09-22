@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ev-fleet-analytics"
+version = "0.1.0"
+description = "EV Fleet Analytics Platform - Phase 1: synthetic telemetry generator and data-lake writer"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ninad Lunge" }]
+
+# Core runtime dependencies for Phase 1.
+# Parquet I/O uses pyarrow; pandas gives us a convenient DataFrame layer.
+dependencies = [
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+]
+
+[project.optional-dependencies]
+# GCS upload is optional so the project runs fully offline by default.
+gcs = ["google-cloud-storage>=2.14"]
+# Pub/Sub streaming publisher (Phase 4).
+pubsub = ["google-cloud-pubsub>=2.21"]
+# Developer tooling.
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "mypy>=1.8",
+]
+
+[project.scripts]
+# Installs a console command: `ev-generate ...`
+ev-generate = "ev_fleet.cli.generate:main"
+# Streaming publisher: `ev-stream-publish ...`
+ev-stream-publish = "ev_fleet.cli.stream_publish:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# A pragmatic, readable rule set: pycodestyle, pyflakes, isort, bugbear, pyupgrade.
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+disallow_untyped_defs = true
+ignore_missing_imports = true

@@ -1,0 +1,20 @@
+# Terraform state — NEVER commit; use remote state (GCS backend) for teams
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+.terraform.lock.hcl
+
+# Real variable values — may contain project IDs, emails, project numbers
+# terraform.tfvars.example is safe to commit; terraform.tfvars is not
+terraform.tfvars
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files (local developer overrides, not shared)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

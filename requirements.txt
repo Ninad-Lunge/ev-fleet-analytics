@@ -1,0 +1,5 @@
+# Core runtime dependencies (Phase 1).
+# For GCS upload support, additionally install: google-cloud-storage>=2.14
+# Or install the package with extras:  pip install -e ".[gcs,dev]"
+pandas>=2.0
+pyarrow>=14.0
