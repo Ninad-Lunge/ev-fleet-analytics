@@ -1,7 +1,6 @@
 # EV Fleet Analytics & Predictive Maintenance Platform
 
-A project-driven GCP Data Engineering capstone. Every GCP data service is learned
-when the project requires it — not as isolated topic drills.
+A project-driven GCP Data Engineering capstone. 
 
 **Domain:** You are the data engineer for an EV company with a (nominal) fleet of
 10,000 vehicles emitting telemetry. This platform implements the full data
