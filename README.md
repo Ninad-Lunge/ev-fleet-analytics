@@ -135,7 +135,7 @@ ev-fleet-analytics/
 
 ## Phases implemented
 
-| Phase | What was built | GCP services (2026 names) |
+| Phase | What was built | GCP services |
 |-------|---------------|-------------|
 | 1 | Data lake: synthetic generator → Parquet → GCS | Cloud Storage |
 | 2 | Warehouse: star schema, analytics SQL, partition pruning | BigQuery |
@@ -145,14 +145,6 @@ ev-fleet-analytics/
 | 5 | Historical batch processing | Managed Service for Apache Spark (formerly Dataproc) |
 | 6 | In-warehouse ML: feature engineering, training, prediction | BigQuery ML |
 | 7 | Full orchestration + data quality alerts + IaC | Cloud Workflows, Cloud Monitoring, Terraform |
-
-> **GCP service name changes (2024–2026):**
-> - Looker Studio → **Data Studio** (April 2026)
-> - Dataproc → **Managed Service for Apache Spark** (2025)
-> - Cloud Composer → **Managed Service for Apache Airflow** (2025)
-> - Cloud Functions → **Cloud Run functions** (August 2024)
-> - Container Registry → **Artifact Registry** (shut down March 2025; this project uses AR)
-> - Vertex AI → **Gemini Enterprise Agent Platform** (April 2026; not used in this project)
 
 ---
 
