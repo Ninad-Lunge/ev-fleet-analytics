@@ -246,30 +246,226 @@ gcloud dataproc clusters delete ev-spark --region=asia-south1
 
 ---
 
+## Prerequisites (new GCP project)
+
+Before running `terraform apply` on a fresh project, complete these steps once.
+Terraform cannot enable APIs or create the project itself.
+
+### 1. Create and configure the project
+
+```bash
+# Set your new project as active
+gcloud config set project <your-project-id>
+
+# Update Application Default Credentials to use the new project for quota
+gcloud auth application-default login
+gcloud auth application-default set-quota-project <your-project-id>
+```
+
+### 2. Link billing
+
+GCP Console → Billing → My Projects → link your billing account.
+Without billing, Cloud Run, Workflows, and Scheduler will be blocked.
+
+### 3. Enable required APIs
+
+Terraform manages resources but cannot enable APIs. Run this once per new project:
+
+```bash
+gcloud services enable \
+  cloudresourcemanager.googleapis.com \
+  iam.googleapis.com \
+  storage.googleapis.com \
+  bigquery.googleapis.com \
+  run.googleapis.com \
+  cloudscheduler.googleapis.com \
+  artifactregistry.googleapis.com \
+  cloudbuild.googleapis.com \
+  pubsub.googleapis.com \
+  workflows.googleapis.com \
+  workflowexecutions.googleapis.com \
+  monitoring.googleapis.com \
+  logging.googleapis.com \
+  dataflow.googleapis.com \
+  dataproc.googleapis.com \
+  --project=<your-project-id>
+```
+
+| API | Used by |
+|-----|---------|
+| `cloudresourcemanager` | Terraform IAM bindings |
+| `iam` | Service account creation |
+| `storage` | GCS data lake bucket |
+| `bigquery` | All warehouse tables |
+| `run` | Cloud Run ingestion job |
+| `cloudscheduler` | Automated cron triggers |
+| `artifactregistry` | Container image storage |
+| `cloudbuild` | Building the container image |
+| `pubsub` | Real-time telemetry streaming |
+| `workflows` | Nightly pipeline orchestration |
+| `workflowexecutions` | Triggering workflow runs |
+| `monitoring` | Alert policies |
+| `logging` | Log-based metric for data quality alert |
+| `dataflow` | Beam enrichment pipeline (Phase 4b) |
+| `dataproc` | Managed Service for Apache Spark (Phase 5) |
+
+### 4. Find your project number
+
+The `project_number` variable is required for constructing Pub/Sub and Cloud Run
+service-agent email addresses. It is the numeric ID, not the project ID string.
+
+```bash
+gcloud projects describe <your-project-id> --format='value(projectNumber)'
+```
+
+---
+
 ## Terraform — deploy to any GCP project
 
 The entire platform is codified as Terraform. All project-specific values are
-variables — no hardcoded IDs, bucket names, or emails anywhere.
+variables — no hardcoded IDs, bucket names, or emails anywhere. Complete the
+Prerequisites section above first.
+
+> **Ordering matters.** The deployment has dependencies that Terraform cannot
+> resolve automatically because they span the boundary between infrastructure
+> and data. Follow the steps below in order.
+
+### Step 1 — Fill in tfvars
 
 ```bash
 cd terraform
-
-# 1. Copy and fill in the template
 cp terraform.tfvars.example terraform.tfvars
-# edit terraform.tfvars with your project_id, project_number, bucket_name, etc.
+```
 
-# 2. Initialise (downloads providers, reads module sources)
+Edit `terraform.tfvars`. Minimum required fields:
+
+| Variable | Example | Notes |
+|---|---|---|
+| `project_id` | `ev-fleet-analytics-test` | GCP project ID (not number) |
+| `project_number` | `448453438636` | From `gcloud projects describe` |
+| `bucket_name` | `ev-fleet-lake-<project-id>` | Must be globally unique across all GCP |
+| `container_image` | `asia-south1-docker.pkg.dev/<project>/ev-fleet/ev-generator:v1` | Built in Step 3 |
+| `alert_notification_email` | `your@email.com` | For Cloud Monitoring alerts |
+
+### Step 2 — Deploy infrastructure with Terraform
+
+```bash
 terraform init
-
-# 3. Preview
-terraform plan
-
-# 4. Deploy
+terraform plan    # review: ~44 resources to create
 terraform apply
 ```
 
-The Cloud Workflows YAML is a Terraform `templatefile` (`.tftpl`). Variables are
-injected at `apply` time — the YAML contains no hardcoded values and deploys cleanly
+This creates: GCS bucket, BigQuery datasets + tables, IAM service accounts +
+bindings, Artifact Registry repo, Cloud Run job, Cloud Scheduler (×2), Cloud
+Workflow, Pub/Sub topic + subscriptions, Cloud Monitoring alerts.
+
+> **Known: Workflows service agent delay.** If `terraform apply` fails with
+> "Workflows service agent does not exist", wait 30 seconds and re-run
+> `terraform apply`. This is a GCP propagation delay when the Workflows API
+> is enabled for the first time.
+
+### Step 3 — Build and push the container image
+
+The Artifact Registry repo now exists. Build the image:
+
+```bash
+cd ..   # back to ev-fleet-analytics/
+gcloud builds submit \
+  --tag asia-south1-docker.pkg.dev/<your-project-id>/ev-fleet/ev-generator:v1 \
+  --project=<your-project-id>
+```
+
+> **Why Step 3 comes after Step 2:** Cloud Run validates the image exists in
+> Artifact Registry when the job is created. The registry must exist (created
+> by Terraform) before the image can be pushed. The image must exist before
+> the first workflow run.
+
+### Step 4 — Seed the data lake
+
+The BigQuery external table and the ML model both need data to function.
+Generate a minimum viable dataset before running the workflow:
+
+```bash
+# Activate the Python venv (install first if needed: pip install -e ".[gcs]")
+source .venv/bin/activate
+
+# Generate 50 vehicles × 7 days — minimum for the ML model to get both
+# TRUE and FALSE labels from the p95 threshold. Fewer vehicles or days
+# produces a single-class label and BQML will refuse to train.
+ev-generate \
+  --vehicles 50 \
+  --days 7 \
+  --interval 3600 \
+  --start-date $(date -u -v-7d +%Y-%m-%d 2>/dev/null || date -u -d '7 days ago' +%Y-%m-%d) \
+  --output /tmp/lake \
+  --bucket <your-bucket-name>
+```
+
+> **Why this step exists:**
+> - The BigQuery external table (`ev_raw.telemetry_ext`) validates the GCS
+>   source URI on creation. It will fail if the bucket is empty.
+> - The BQML logistic regression requires at least 2 unique label values.
+>   With <50 vehicles the p95 threshold may produce all-FALSE or all-TRUE
+>   labels, causing the model training step to fail.
+
+### Step 5 — Trigger the pipeline and validate
+
+```bash
+gcloud workflows run ev-nightly-pipeline \
+  --location=asia-south1 \
+  --project=<your-project-id>
+```
+
+The workflow takes ~3–4 minutes. Verify all outputs:
+
+```bash
+# Warehouse populated
+bq query --use_legacy_sql=false \
+  "SELECT COUNT(*) AS rows, COUNT(DISTINCT event_date) AS days
+   FROM \`<project>.ev_analytics.fact_telemetry\`"
+
+# ML features with balanced labels (expect ~95% false, ~5% true)
+bq query --use_legacy_sql=false \
+  "SELECT is_anomaly, COUNT(*) AS cnt
+   FROM \`<project>.ev_analytics.ml_features\` GROUP BY 1"
+
+# Predictions scored
+bq query --use_legacy_sql=false \
+  "SELECT COUNT(*) AS vehicles, MAX(anomaly_probability) AS max_prob
+   FROM \`<project>.ev_analytics.predictions\`
+   WHERE event_date = CURRENT_DATE('Asia/Kolkata')"
+```
+
+### Step 6 — Enable post-deployment monitoring alerts (optional)
+
+Two alert policies are commented out in `modules/monitoring/main.tf` because
+the Cloud Monitoring API rejects them on a fresh project (their metrics don't
+exist until the pipeline has run):
+
+- `workflow_failed` — requires `workflowexecutions.googleapis.com` metric,
+  registered after the first workflow execution.
+- `telemetry_gap` — requires the log-based metric to have received at least
+  one matching log entry.
+
+After Step 5 succeeds, uncomment both resources in `modules/monitoring/main.tf`
+and run `terraform apply` again.
+
+---
+
+### Deployment summary
+
+```
+Step 1: fill terraform.tfvars
+Step 2: terraform apply          → infrastructure deployed (~2 min)
+Step 3: gcloud builds submit     → container image built and pushed
+Step 4: ev-generate              → data lake seeded (50 vehicles, 7 days)
+Step 5: gcloud workflows run     → full pipeline validated end-to-end (~3 min)
+Step 6: uncomment alerts + apply → monitoring fully operational (optional)
+```
+
+The Cloud Workflows YAML is a Terraform `templatefile` (`.tftpl`). All
+project-specific values (project ID, region, bucket name) are injected at
+`apply` time — the YAML contains no hardcoded values and deploys cleanly
 to any GCP project.
 
 For shared/team use, uncomment the GCS backend block in `versions.tf` first.

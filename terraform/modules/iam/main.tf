@@ -53,20 +53,6 @@ resource "google_storage_bucket_iam_member" "workflow_runner_object_viewer" {
 }
 
 # =============================================================================
-# CLOUD RUN JOB-LEVEL BINDING
-# ev-ingest-runner: invoke the specific Cloud Run job.
-# Scoped to the job resource, not project-wide run.invoker.
-# =============================================================================
-
-resource "google_cloud_run_v2_job_iam_member" "ingest_runner_invoker" {
-  project  = var.project_id
-  location = var.region
-  name     = var.cloud_run_job_name
-  role     = "roles/run.invoker"
-  member   = "serviceAccount:${google_service_account.ingest_runner.email}"
-}
-
-# =============================================================================
 # PROJECT-LEVEL BINDINGS — ev-workflow-runner
 # Grants the minimum roles the workflow needs to run BigQuery jobs and
 # invoke Cloud Run jobs across the project.

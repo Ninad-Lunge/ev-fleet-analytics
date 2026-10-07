@@ -16,9 +16,9 @@ locals {
   # Common labels applied to every resource that supports labels.
   # Modules merge these with their own resource-specific labels.
   common_labels = merge(var.tags, {
-    environment  = var.environment
-    managed-by   = "terraform"
-    platform     = "ev-fleet-analytics"
+    environment = var.environment
+    managed-by  = "terraform"
+    platform    = "ev-fleet-analytics"
   })
 
   # ---------------------------------------------------------------------------
@@ -61,13 +61,12 @@ module "storage" {
 module "iam" {
   source = "./modules/iam"
 
-  project_id         = var.project_id
-  region             = var.region
-  project_number     = var.project_number
-  bucket_name        = module.storage.bucket_name
-  cloud_run_job_name = "ev-generator" # matches the job name in the ingestion module
-  pubsub_service_agent  = local.pubsub_service_agent
-  compute_default_sa    = local.compute_default_sa
+  project_id           = var.project_id
+  region               = var.region
+  project_number       = var.project_number
+  bucket_name          = module.storage.bucket_name
+  pubsub_service_agent = local.pubsub_service_agent
+  compute_default_sa   = local.compute_default_sa
 
   depends_on = [module.storage]
 }
@@ -118,16 +117,16 @@ module "pubsub" {
 module "ingestion" {
   source = "./modules/ingestion"
 
-  project_id       = var.project_id
-  region           = var.region
-  bucket_name      = module.storage.bucket_name
-  container_image  = var.container_image
-  ingest_sa_email  = module.iam.ingest_sa_email
-  ingestion_cron   = var.ingestion_cron
+  project_id         = var.project_id
+  region             = var.region
+  bucket_name        = module.storage.bucket_name
+  container_image    = var.container_image
+  ingest_sa_email    = module.iam.ingest_sa_email
+  ingestion_cron     = var.ingestion_cron
   scheduler_timezone = var.scheduler_timezone
-  vehicles_per_run = var.vehicles_per_run
-  interval_seconds = var.interval_seconds
-  environment      = var.environment
+  vehicles_per_run   = var.vehicles_per_run
+  interval_seconds   = var.interval_seconds
+  environment        = var.environment
 
   depends_on = [module.iam, module.storage]
 }
@@ -161,11 +160,11 @@ module "workflows" {
 module "monitoring" {
   source = "./modules/monitoring"
 
-  project_id                        = var.project_id
-  alert_email                       = var.alert_notification_email
-  environment                       = var.environment
-  workflow_name                     = module.workflows.workflow_name
-  cloud_run_job_name                = module.ingestion.cloud_run_job_name
+  project_id                            = var.project_id
+  alert_email                           = var.alert_notification_email
+  environment                           = var.environment
+  workflow_name                         = module.workflows.workflow_name
+  cloud_run_job_name                    = module.ingestion.cloud_run_job_name
   pubsub_subscription_backlog_threshold = 10000
 
   depends_on = [module.ingestion, module.workflows, module.pubsub]
@@ -180,10 +179,10 @@ module "monitoring" {
 module "streaming" {
   source = "./modules/streaming"
 
-  project_id          = var.project_id
-  region              = var.region
-  bucket_name         = module.storage.bucket_name
-  dataproc_zone       = var.dataproc_zone
+  project_id              = var.project_id
+  region                  = var.region
+  bucket_name             = module.storage.bucket_name
+  dataproc_zone           = var.dataproc_zone
   dataflow_temp_prefix    = var.dataflow_temp_prefix
   dataflow_staging_prefix = "dataflow/staging"
   environment             = var.environment

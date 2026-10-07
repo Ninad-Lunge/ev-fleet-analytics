@@ -1,6 +1,6 @@
 # EV Fleet Analytics — Nightly Pipeline Workflow (Terraform template)
 #
-# This file is a Terraform templatefile. Variables in ${...} syntax are
+# This file is a Terraform templatefile. Variables in $${...} syntax are
 # substituted by Terraform when this file is read via templatefile().
 # It is NOT valid Cloud Workflows YAML on its own — never deploy it directly.
 #
@@ -249,9 +249,10 @@ main:
                   SELECT d.vehicle_id, d.event_date, d.avg_soc, d.min_soc,
                     d.avg_batt_temp, d.max_batt_temp, d.avg_voltage, d.voltage_stddev,
                     d.avg_motor_temp, d.avg_speed, d.avg_power, d.daily_energy_kwh,
-                    d.charging_intervals, h.health_score,
-                    h.total_energy_kwh AS lifetime_energy_kwh,
-                    h.charging_hours AS lifetime_charging_hours,
+                    d.charging_intervals,
+                    COALESCE(h.health_score, 100.0) AS health_score,
+                    COALESCE(h.total_energy_kwh, d.daily_energy_kwh) AS lifetime_energy_kwh,
+                    COALESCE(h.charging_hours, d.charging_intervals * 1.0 / 12) AS lifetime_charging_hours,
                     (d.max_batt_temp > t.p95_max_temp) AS is_anomaly
                   FROM daily d CROSS JOIN threshold t
                   LEFT JOIN `${project_id}.ev_analytics.battery_health_spark` h

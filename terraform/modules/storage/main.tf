@@ -94,5 +94,5 @@ resource "google_storage_bucket" "data_lake" {
 resource "google_storage_bucket_object" "dataflow_staging_placeholder" {
   bucket  = google_storage_bucket.data_lake.name
   name    = "dataflow/staging/.gitkeep"
-  content = ""
+  content = "placeholder"
 }

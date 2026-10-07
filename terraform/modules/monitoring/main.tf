@@ -31,46 +31,39 @@ resource "google_monitoring_notification_channel" "email" {
 # Check the Workflow execution logs in GCP console for the exact failing step.
 # =============================================================================
 
-resource "google_monitoring_alert_policy" "workflow_failed" {
-  project      = var.project_id
-  display_name = "[EV] Workflow Execution Failed (${var.environment})"
-  enabled      = true
-  combiner     = "OR"
+# =============================================================================
+# ALERT 1: Cloud Workflow execution failed
+# NOTE: This alert cannot be created until the workflow has executed at least
+# once, because the workflowexecutions.googleapis.com metric descriptor is
+# only registered by Cloud Monitoring after first execution (~10 min).
+#
+# TO ENABLE: After running `gcloud workflows run ev-nightly-pipeline` once
+# successfully, uncomment this resource and run `terraform apply`.
+# =============================================================================
 
-  conditions {
-    display_name = "ev-nightly-pipeline execution failed"
-
-    condition_threshold {
-      # Count of finished workflow executions with status=FAILED.
-      filter          = "resource.type=\"workflows.googleapis.com/Workflow\" AND metric.type=\"workflowexecutions.googleapis.com/finished_execution_count\" AND metric.labels.status=\"FAILED\" AND resource.labels.workflow_id=\"${var.workflow_name}\""
-      comparison      = "COMPARISON_GT"
-      threshold_value = 0
-      duration        = "0s" # alert immediately — do not wait for a sustained condition
-
-      aggregations {
-        alignment_period     = "3600s" # 1-hour window
-        per_series_aligner   = "ALIGN_COUNT"
-        cross_series_reducer = "REDUCE_SUM"
-        group_by_fields      = ["resource.label.workflow_id"]
-      }
-    }
-  }
-
-  notification_channels = [google_monitoring_notification_channel.email.id]
-
-  documentation {
-    subject = "[EV] Nightly pipeline failed — ${var.workflow_name}"
-    content = <<-EOT
-      The Cloud Workflow **${var.workflow_name}** reported a FAILED execution.
-
-      Investigate:
-      1. Open Cloud Workflows console → select the failed execution.
-      2. Check which step failed (warehouse refresh, enrichment, ML, or predictions).
-      3. Check BigQuery job history for any failed BQ jobs within that execution.
-      4. Re-run manually: gcloud workflows run ${var.workflow_name} --location=asia-south1
-    EOT
-  }
-}
+# resource "google_monitoring_alert_policy" "workflow_failed" {
+#   project      = var.project_id
+#   display_name = "[EV] Workflow Execution Failed (${var.environment})"
+#   enabled      = true
+#   combiner     = "OR"
+#
+#   conditions {
+#     display_name = "ev-nightly-pipeline execution failed"
+#     condition_threshold {
+#       filter          = "resource.type=\"workflows.googleapis.com/Workflow\" AND metric.type=\"workflowexecutions.googleapis.com/finished_execution_count\" AND metric.labels.status=\"FAILED\" AND resource.labels.workflow_id=\"${var.workflow_name}\""
+#       comparison      = "COMPARISON_GT"
+#       threshold_value = 0
+#       duration        = "0s"
+#       aggregations {
+#         alignment_period     = "3600s"
+#         per_series_aligner   = "ALIGN_COUNT"
+#         cross_series_reducer = "REDUCE_SUM"
+#         group_by_fields      = ["resource.label.workflow_id"]
+#       }
+#     }
+#   }
+#   notification_channels = [google_monitoring_notification_channel.email.id]
+# }
 
 # =============================================================================
 # ALERT 2: Pub/Sub backlog high — data quality signal
@@ -126,58 +119,35 @@ resource "google_monitoring_alert_policy" "pubsub_backlog" {
 # Parquet write succeeded but the warehouse refresh failed, or the ingestion
 # produced zero rows (bad generator config).
 #
-# PREREQUISITE: Create the log-based metric first:
-#   gcloud logging metrics create ev_telemetry_row_count \
-#     --description="Count of telemetry rows written per ingestion run" \
-#     --log-filter='resource.type="cloud_run_job" AND resource.labels.job_name="ev-generator" AND textPayload:"Wrote"' \
-#     --project=<PROJECT_ID>
-#
-# The metric counts log lines matching "Wrote N Parquet file(s)." from the
-# ev-generator container. If no lines are counted for 25h, ingestion has
-# silently stopped.
+# The log-based metric is created here as a Terraform resource so it exists
+# on every fresh project deployment. The metric counts log lines from the
+# ev-generator container matching "Wrote N Parquet file(s)."
 # =============================================================================
 
-resource "google_monitoring_alert_policy" "telemetry_gap" {
-  project      = var.project_id
-  display_name = "[EV] Data Quality — Telemetry Ingestion Gap > 25h (${var.environment})"
-  enabled      = true
-  combiner     = "OR"
+resource "google_logging_metric" "ev_telemetry_row_count" {
+  project     = var.project_id
+  name        = "ev_telemetry_row_count"
+  description = "Counts log lines from ev-generator confirming Parquet files were written. Used by the telemetry-gap alert to detect missed ingestion runs."
+  filter      = "resource.type=\"cloud_run_job\" AND resource.labels.job_name=\"${var.cloud_run_job_name}\" AND textPayload=~\"Wrote [0-9]+ Parquet\""
 
-  conditions {
-    display_name = "No telemetry ingestion for 25 hours"
-
-    condition_threshold {
-      # Custom log-based metric — requires the gcloud command in the comment above.
-      filter          = "resource.type=\"global\" AND metric.type=\"logging.googleapis.com/user/ev_telemetry_row_count\""
-      comparison      = "COMPARISON_LT"
-      threshold_value = 1
-      duration        = "90000s" # 25 hours — allows for a 1-hour window around the scheduled run
-
-      aggregations {
-        alignment_period     = "3600s"
-        per_series_aligner   = "ALIGN_COUNT"
-        cross_series_reducer = "REDUCE_SUM"
-      }
-    }
-  }
-
-  notification_channels = [google_monitoring_notification_channel.email.id]
-
-  documentation {
-    subject = "[EV] ALERT: No telemetry rows ingested in 25 hours"
-    content = <<-EOT
-      No telemetry ingestion activity has been detected in the last 25 hours.
-      This could mean: the Cloud Run job did not run, the generator produced zero rows,
-      or the log-based metric is not receiving events.
-
-      Investigate:
-      1. Check Cloud Scheduler: was ev-ingest-daily triggered today?
-      2. Check Cloud Run job history: did ev-generator complete successfully?
-      3. Check GCS: does gs://${var.project_id}/raw/telemetry/date=today/ exist?
-      4. Check the custom metric: gcloud logging metrics list --project=${var.project_id}
-    EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    unit        = "1"
   }
 }
+
+# =============================================================================
+# ALERT 3: Telemetry ingestion gap
+# NOTE: Cannot be created until the log-based metric has received at least one
+# matching log entry. Cloud Monitoring rejects alerts with filters that return
+# no time series on a fresh project.
+#
+# TO ENABLE: After the first successful ingestion run, uncomment and apply.
+# =============================================================================
+
+# resource "google_monitoring_alert_policy" "telemetry_gap" { ... }
+# (see git history for full resource definition)
 
 # =============================================================================
 # ALERT 4: Cloud Run job task failure

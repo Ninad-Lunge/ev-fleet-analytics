@@ -18,11 +18,6 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "cloud_run_job_name" {
-  description = "Cloud Run Job name for the run.invoker resource-level binding."
-  type        = string
-}
-
 variable "pubsub_service_agent" {
   description = "Pub/Sub service agent email (service-<project_number>@gcp-sa-pubsub.iam.gserviceaccount.com)."
   type        = string

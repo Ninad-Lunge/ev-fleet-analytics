@@ -200,6 +200,6 @@ variable "tags" {
     Platform-managed labels (environment, managed-by) are merged automatically
     in each module — callers should not duplicate them here.
   EOT
-  type    = map(string)
-  default = {}
+  type        = map(string)
+  default     = {}
 }

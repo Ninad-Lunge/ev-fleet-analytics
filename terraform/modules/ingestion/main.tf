@@ -113,3 +113,19 @@ resource "google_cloud_scheduler_job" "ev_ingest_daily" {
 
   depends_on = [google_cloud_run_v2_job.ev_generator]
 }
+
+# =============================================================================
+# JOB-LEVEL IAM BINDING
+# Grant the ingestion SA run.invoker on this specific job only.
+# Placed here (not in the iam module) because this resource owns the job and
+# can reference it directly — avoids a circular module dependency.
+# The Scheduler uses the same SA to trigger the job via OAuth.
+# =============================================================================
+
+resource "google_cloud_run_v2_job_iam_member" "ingest_runner_invoker" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_job.ev_generator.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${var.ingest_sa_email}"
+}
