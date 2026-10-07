@@ -509,16 +509,3 @@ EOF
 No service account has project-wide storage admin or BigQuery admin. The Compute
 Engine default SA holds only the minimum roles for Cloud Build, Dataflow, and
 Dataproc workers.
-
----
-
-## Key lessons learned (exam-relevant)
-
-- **Partition pruning:** date-filtered queries scan 1/7th of data vs full scan — confirmed via `bq --dry_run`.
-- **Clustering:** only reduces bytes at large per-partition volumes; no effect at small scale.
-- **Beam self-contained functions:** all imports and constants must be inside the function body. Module-level globals cause `NameError` on remote Dataflow workers (dill serialization).
-- **Regional API endpoints:** Cloud Scheduler → Cloud Run Jobs requires the regional endpoint (`asia-south1-run.googleapis.com`), not the global one (returns NOT_FOUND).
-- **BigQuery ML vs custom models:** BQML keeps training, evaluation, and inference in SQL. No model server, no `.pkl` files, no deployment pipeline. Tradeoff: simpler ops, less model flexibility.
-- **Dataflow vs BigQuery SQL for batch:** for daily enrichment at this scale, BigQuery SQL is the correct, cheaper choice. Dataflow is justified for streaming with windowing, exactly-once semantics, or complex non-SQL transforms.
-- **Cloud Workflows vs Managed Service for Apache Airflow:** Managed Service for Apache Airflow (formerly Cloud Composer) runs a GKE cluster (~$300/month). Workflows is serverless, free ≤5,000 steps/month, and sufficient for a sequential DAG. Choose Managed Airflow when you need Airflow's sensor ecosystem or complex dependency graphs.
-- **`_member` over `_binding` in Terraform:** additive vs authoritative IAM. `_binding` replaces the entire role member list and causes outages in shared projects.
