@@ -13,6 +13,9 @@ full orchestration — all on GCP, all automated.
 
 ---
 
+<img width="2022" height="882" alt="ev-fleet-analytics-animation" src="https://github.com/user-attachments/assets/12040bd9-d48f-4e50-abb2-1cf8c232e23f" />
+
+
 ## Architecture
 
 ```
